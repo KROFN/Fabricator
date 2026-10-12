@@ -21,6 +21,7 @@ _READ = [
     ("GET", "/api/servers/<server_id>"),
     ("GET", "/api/servers/<server_id>/logs"),
     ("GET", "/api/servers/<server_id>/mods"),
+    ("GET", "/api/servers/<server_id>/icon"),
     ("GET", "/api/servers/<server_id>/install/progress"),
     ("GET", "/api/servers/<server_id>/java-status"),
     ("GET", "/api/servers/<server_id>/metrics"),
@@ -88,6 +89,9 @@ _NEVER = [
     ("DELETE", "/api/servers/<server_id>"),
     ("POST", "/api/servers"),
     ("PUT", "/api/servers/order"),
+    # Server icon (#85): writes server-icon.png into the install path.
+    ("PUT", "/api/servers/<server_id>/icon"),
+    ("DELETE", "/api/servers/<server_id>/icon"),
     # host-level java
     ("POST", "/api/java/install"),
     ("DELETE", "/api/java/install/<task_id>"),

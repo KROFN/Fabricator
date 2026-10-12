@@ -2,6 +2,7 @@
 from functools import lru_cache
 from pathlib import Path
 from typing import Optional
+import io
 import logging
 import math
 import os
@@ -11,7 +12,8 @@ import stat
 import threading
 import uuid
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, send_file
+from PIL import Image, ImageOps
 
 logger = logging.getLogger(__name__)
 
@@ -1333,6 +1335,80 @@ def toggle_server_mods(server_id, server):
 
     storage.rename_content(server_id, renamed)
     return jsonify({'success': True, 'renamed': renamed, 'errors': errors})
+
+
+SERVER_ICON = 'server-icon.png'
+ICON_MAX_BYTES = 10 * 1024 * 1024
+# Checked before decoding: a small PNG can still expand to gigabytes of pixels.
+ICON_MAX_PIXELS = 4096 * 4096
+
+
+def _server_icon_path(server: dict) -> Path:
+    return _registry().resolve_install_path(server) / SERVER_ICON
+
+
+@server_bp.route('/servers/<server_id>/icon', methods=['GET'])
+@require_server
+def get_server_icon(server_id, server):
+    try:
+        path = _server_icon_path(server)
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 400
+    if not path.is_file():
+        return jsonify({'error': 'No server icon'}), 404
+    return send_file(path, mimetype='image/png', max_age=0)
+
+
+@server_bp.route('/servers/<server_id>/icon', methods=['PUT'])
+@require_server
+def set_server_icon(server_id, server):
+    """Turn any image into the 64x64 ``server-icon.png`` Minecraft shows in
+    the server list (#85). The raw image is the request body. Non-square images
+    are centre-cropped rather than squashed. Read at server start only.
+    """
+    if request.content_length and request.content_length > ICON_MAX_BYTES:
+        return jsonify({'error': 'Image is larger than 10 MB'}), 413
+    data = request.stream.read(ICON_MAX_BYTES + 1)
+    if len(data) > ICON_MAX_BYTES:
+        return jsonify({'error': 'Image is larger than 10 MB'}), 413
+
+    try:
+        with Image.open(io.BytesIO(data)) as img:
+            if img.width * img.height > ICON_MAX_PIXELS:
+                return jsonify({'error': 'Image dimensions are too large'}), 400
+            icon = ImageOps.fit(ImageOps.exif_transpose(img).convert('RGBA'), (64, 64), Image.LANCZOS)
+    except (OSError, ValueError, Image.DecompressionBombError):
+        return jsonify({'error': 'Not a supported image file'}), 400
+
+    try:
+        target = _server_icon_path(server)
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 400
+    if not target.parent.is_dir():
+        return jsonify({'error': 'Server is not installed yet'}), 409
+    if target.is_symlink():
+        return jsonify({'error': f'{SERVER_ICON} is a symlink'}), 409
+
+    staged = target.with_name(f'.{SERVER_ICON}.{uuid.uuid4().hex}')
+    try:
+        icon.save(staged, 'PNG')
+        os.replace(staged, target)
+    except OSError as exc:
+        staged.unlink(missing_ok=True)
+        return jsonify({'error': f'Failed to save icon: {exc}'}), 500
+    return jsonify({'success': True})
+
+
+@server_bp.route('/servers/<server_id>/icon', methods=['DELETE'])
+@require_server
+def delete_server_icon(server_id, server):
+    try:
+        path = _server_icon_path(server)
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 400
+    if path.is_file() and not path.is_symlink():
+        _unlink_with_retry(path)
+    return jsonify({'success': True})
 
 
 @server_bp.route('/servers/<server_id>/settings', methods=['PUT'])

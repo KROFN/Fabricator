@@ -360,6 +360,21 @@ exist.
 **Response (200):** `{ "success": true }`
 **Errors:** `400` path/content missing or invalid · `404` file not found · `500` write failed
 
+#### `GET /api/servers/<server_id>/icon`
+
+The server's `server-icon.png`. **Errors:** `404` no icon set
+
+#### `PUT /api/servers/<server_id>/icon`
+
+Set the server-list icon. **Body:** the raw image bytes (any format Pillow reads, up to 10 MB and 4096×4096). Centre-cropped to square, resized to 64×64 and written as `server-icon.png`. Minecraft reads it at start, so a running server needs a restart.
+
+**Response (200):** `{ "success": true }`
+**Errors:** `400` not an image / too many pixels · `409` server not installed yet · `413` over 10 MB
+
+#### `DELETE /api/servers/<server_id>/icon`
+
+Remove the icon. Succeeds when there is none. **Response (200):** `{ "success": true }`
+
 ---
 
 ## Mods
