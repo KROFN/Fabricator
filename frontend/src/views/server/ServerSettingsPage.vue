@@ -6,12 +6,44 @@ import Panel from '../../components/ui/Panel.vue'
 import ToggleRow from '../../components/ui/ToggleRow.vue'
 import { useServerStore } from '../../stores/server'
 import { useAuthStore } from '../../stores/auth'
-import { getInstalledJava, getJavaStatus, getLoaderGameVersions, getServerInstallProgress, upgradeServer } from '../../api/servers'
+import { deleteServerIcon, getInstalledJava, getJavaStatus, getLoaderGameVersions, getServerInstallProgress, setServerIcon, upgradeServer } from '../../api/servers'
 import { useToast } from '../../composables/useToast'
 
 const store = useServerStore()
 const auth = useAuthStore()
 const toast = useToast()
+
+// Server icon (#85). Saved immediately rather than with the form: it's a file,
+// not a server.properties key. The img's own load/error says whether one exists.
+const hasIcon = ref(false)
+const iconBusy = ref(false)
+const iconVersion = ref(Date.now())
+const iconInput = ref(null)
+const iconUrl = computed(() => `/api/servers/${store.currentServerId}/icon?v=${iconVersion.value}`)
+
+async function changeIcon(action, successMessage) {
+  iconBusy.value = true
+  try {
+    await action()
+    iconVersion.value = Date.now()
+    const restart = store.canEditSettings ? '' : ' Restart the server to show it.'
+    toast.success(`${successMessage}${restart}`, 'Server Icon')
+  } catch (error) {
+    toast.error(error.message || 'Failed to update server icon', 'Error')
+  } finally {
+    iconBusy.value = false
+  }
+}
+
+function onIconPicked(event) {
+  const file = event.target.files?.[0]
+  event.target.value = ''
+  if (file) changeIcon(() => setServerIcon(store.currentServerId, file), 'Icon updated.')
+}
+
+function removeIcon() {
+  changeIcon(() => deleteServerIcon(store.currentServerId), 'Icon removed.')
+}
 
 // First-stage migrations are deliberately limited to jar-only server types.
 // Fabric/Forge/NeoForge need per-mod compatibility resolution before they can
@@ -334,6 +366,29 @@ const onReset = () => {
     </Panel>
 
     <Panel title="Server Identity">
+      <FormField class="settings-page__icon-field" label="Server Icon" hint="Any image — cropped and resized to 64×64. Shown in the multiplayer server list.">
+        <template #default="{ id, describedBy }">
+          <div class="settings-page__icon-row">
+            <span class="settings-page__icon">
+              <img v-show="hasIcon" :src="iconUrl" alt="Current server icon" @load="hasIcon = true" @error="hasIcon = false" />
+              <span v-if="!hasIcon" aria-hidden="true">?</span>
+            </span>
+            <input
+              :id="id"
+              ref="iconInput"
+              type="file"
+              accept="image/*"
+              class="settings-page__icon-input"
+              :aria-describedby="describedBy"
+              @change="onIconPicked"
+            />
+            <AppButton variant="ghost" size="sm" :loading="iconBusy" @click="iconInput.click()">
+              {{ hasIcon ? 'Change image' : 'Upload image' }}
+            </AppButton>
+            <AppButton v-if="hasIcon" variant="ghost" size="sm" :disabled="iconBusy" @click="removeIcon">Remove</AppButton>
+          </div>
+        </template>
+      </FormField>
       <div class="settings-page__grid">
         <FormField label="Server Name">
           <template #default="{ id, describedBy }">
@@ -1400,6 +1455,42 @@ const onReset = () => {
 .settings-page__upgrade-actions .settings-page__input {
   width: auto;
   min-width: 104px;
+}
+
+.settings-page__icon-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.settings-page__icon-field {
+  margin-bottom: var(--space-4);
+}
+
+/* 64px, the size Minecraft renders it at, with pixelated scaling so what you
+   see here is what players see. */
+.settings-page__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+  color: var(--text-disabled);
+  overflow: hidden;
+}
+
+.settings-page__icon img {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.settings-page__icon-input {
+  display: none;
 }
 
 .settings-page__grid {

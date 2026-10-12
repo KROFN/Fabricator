@@ -44,16 +44,17 @@ def test_manage_bucket_is_exactly_the_expected_set():
         ("POST", "/api/modrinth/mod/<mod_id>/install"),
         ("DELETE", "/api/servers/<server_id>/mods"),
         ("DELETE", "/api/servers/<server_id>/mods/<path:filename>"),
+        ("PATCH", "/api/servers/<server_id>/mods"),
     }
     assert manage == expected
 
 
 def test_read_and_manage_counts():
     counts = Counter(BUCKETS.values())
-    assert counts["read"] == 34
-    assert counts["manage"] == 7
-    assert counts["never"] == 64
-    assert sum(counts.values()) == 105
+    assert counts["read"] == 35
+    assert counts["manage"] == 8
+    assert counts["never"] == 67
+    assert sum(counts.values()) == 110
 
 
 def test_the_console_and_settings_routes_are_never():

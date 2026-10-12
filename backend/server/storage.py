@@ -222,6 +222,19 @@ def delete_server(server_id: str) -> bool:
         return False
 
 
+def reorder_servers(ids: List[str]) -> List[Dict[str, Any]]:
+    """Rewrite servers.json in the order of ``ids`` (#84). The first server is
+    the one the panel opens on. Unknown ids are ignored, and servers missing
+    from ``ids`` (e.g. created in another tab) keep their order at the end."""
+    with _storage_lock:
+        servers = load_servers()
+        rank = {sid: i for i, sid in enumerate(ids)}
+        # sorted() is stable, so unranked servers keep their relative order.
+        servers.sort(key=lambda s: rank.get(s.get('id'), len(rank)))
+        save_servers(servers)
+        return servers
+
+
 def update_server_status(server_id: str, status: str) -> Optional[Dict[str, Any]]:
     """Update server status.
 
@@ -300,6 +313,31 @@ def forget_content(server_id: str, filenames: List[str]) -> None:
                 if manifest.pop(filename, None) is not None:
                     removed = True
             if removed:
+                server[CONTENT_MANIFEST_KEY] = manifest
+                server['updatedAt'] = iso_z_now()
+                save_servers(servers)
+            return
+
+
+def rename_content(server_id: str, renames: Dict[str, str]) -> None:
+    """Move manifest entries to new filenames (``{old: new}``) — enable/disable
+    renames the jar, and its Modrinth identity has to follow it."""
+    if not renames:
+        return
+    with _storage_lock:
+        servers = load_servers()
+        for server in servers:
+            if server.get('id') != server_id:
+                continue
+            manifest = server.get(CONTENT_MANIFEST_KEY)
+            if not isinstance(manifest, dict):
+                return
+            moved = False
+            for old, new in renames.items():
+                if old in manifest:
+                    manifest[new] = manifest.pop(old)
+                    moved = True
+            if moved:
                 server[CONTENT_MANIFEST_KEY] = manifest
                 server['updatedAt'] = iso_z_now()
                 save_servers(servers)

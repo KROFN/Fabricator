@@ -17,7 +17,7 @@ Bump ``PANEL_TABLE_REVISION`` only after a human has re-audited the difference.
 from __future__ import annotations
 
 #: Date of the last human re-audit of this snapshot.
-PANEL_TABLE_REVISION = "2026-08-19"
+PANEL_TABLE_REVISION = "2026-10-12"
 
 PANEL_READ: frozenset[tuple[str, str]] = frozenset({
     ("GET", "/api/auth/status"),
@@ -42,11 +42,16 @@ PANEL_READ: frozenset[tuple[str, str]] = frozenset({
     ("GET", "/api/modrinth/project/<project_id>/versions"),
     ("GET", "/api/modrinth/search"),
     ("GET", "/api/modrinth/servers/<server_id>/resolve-installed"),
+    # 2026-10-12: same folder hashing as resolve-installed; filenames + public
+    # catalog data only (#80).
+    ("GET", "/api/modrinth/servers/<server_id>/updates"),
     ("GET", "/api/modrinth/version/<version_id>"),
     ("GET", "/api/servers"),
     ("GET", "/api/servers/<server_id>"),
     ("GET", "/api/servers/<server_id>/backup-configs"),
     ("GET", "/api/servers/<server_id>/backup-summary"),
+    # 2026-10-12: PNG bytes from a fixed filename; symlinks refused (#85).
+    ("GET", "/api/servers/<server_id>/icon"),
     ("GET", "/api/servers/<server_id>/install/progress"),
     ("GET", "/api/servers/<server_id>/java-status"),
     ("GET", "/api/servers/<server_id>/logs"),
@@ -58,6 +63,8 @@ PANEL_READ: frozenset[tuple[str, str]] = frozenset({
 PANEL_MANAGE: frozenset[tuple[str, str]] = frozenset({
     ("DELETE", "/api/servers/<server_id>/mods"),
     ("DELETE", "/api/servers/<server_id>/mods/<path:filename>"),
+    # 2026-10-12: rename .jar <-> .jar.disabled inside mods/ only (#83).
+    ("PATCH", "/api/servers/<server_id>/mods"),
     ("POST", "/api/modrinth/mod/<mod_id>/install"),
     ("POST", "/api/servers/<server_id>/install"),
     ("POST", "/api/servers/<server_id>/restart"),

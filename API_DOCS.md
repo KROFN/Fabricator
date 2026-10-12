@@ -100,7 +100,14 @@ Clears the session. **Response (200):** `{ "authenticated": false }`
 #### `GET /api/servers`
 
 List all servers. Each record is augmented with a `runtime` block from the process registry
-(live status, PID, RAM, mod count).
+(live status, PID, RAM, mod count). Returned in saved order; the first server is the one the panel opens on.
+
+#### `PUT /api/servers/order`
+
+Reorder the server list. **Body:** `{ "ids": ["srv_b", "srv_a"] }`. Unknown ids are ignored; servers not listed keep their order at the end.
+
+**Response (200):** the reordered list, same shape as `GET /api/servers`.
+**Error (400):** `ids` not a list of strings
 
 #### `POST /api/servers`
 
@@ -353,6 +360,21 @@ exist.
 **Response (200):** `{ "success": true }`
 **Errors:** `400` path/content missing or invalid · `404` file not found · `500` write failed
 
+#### `GET /api/servers/<server_id>/icon`
+
+The server's `server-icon.png`. **Errors:** `404` no icon set
+
+#### `PUT /api/servers/<server_id>/icon`
+
+Set the server-list icon. **Body:** the raw image bytes (any format Pillow reads, up to 10 MB and 4096×4096). Centre-cropped to square, resized to 64×64 and written as `server-icon.png`. Minecraft reads it at start, so a running server needs a restart.
+
+**Response (200):** `{ "success": true }`
+**Errors:** `400` not an image / too many pixels · `409` server not installed yet · `413` over 10 MB
+
+#### `DELETE /api/servers/<server_id>/icon`
+
+Remove the icon. Succeeds when there is none. **Response (200):** `{ "success": true }`
+
 ---
 
 ## Mods
@@ -372,6 +394,15 @@ Bulk delete. **Body:** `{ "filenames": ["a.jar", "b.jar"] }`
 
 **Response (200):** `{ "success": true, "deleted": ["a.jar"], "errors": [{ "filename": "b.jar", "error": "File not found" }] }`
 **Error (400):** `filenames` missing or empty
+
+#### `PATCH /api/servers/<server_id>/mods`
+
+Bulk enable/disable by renaming `x.jar` ↔ `x.jar.disabled`. Loaders only load `*.jar`, so a disabled jar stays in the list but isn't loaded; takes effect on the next start. Jars already in the requested state are skipped silently.
+
+**Body:** `{ "filenames": ["a.jar", "b.jar.disabled"], "enabled": false }`
+
+**Response (200):** `{ "success": true, "renamed": { "a.jar": "a.jar.disabled" }, "errors": [{ "filename": "c.jar", "error": "c.jar.disabled already exists" }] }`
+**Error (400):** `filenames` missing or empty, or `enabled` not a boolean
 
 ---
 
@@ -1471,7 +1502,7 @@ token list; the `<secret>` half is what is never shown again.
 | Scope | Can do |
 |---|---|
 | `read` | Read-only routes: server list and details, logs, installed mods, metrics, Java status, backups and snapshot listings, the Modrinth catalog. |
-| `manage` | Everything `read` can do, plus start / stop / restart, re-install the configured loader, install or update a mod by Modrinth ID, and remove installed mods. |
+| `manage` | Everything `read` can do, plus start / stop / restart, re-install the configured loader, install or update a mod by Modrinth ID, and remove, enable or disable installed mods. |
 
 Every `/api` route is classified into exactly one of three buckets, and the classification is
 enforced by the panel itself, not by the client: **32 read**, **7 manage**, **58 never**. Routes in

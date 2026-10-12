@@ -115,7 +115,7 @@ export async function enrichInstalledModsWithModrinth(mods, options = {}) {
   const pending = []
   result.forEach((mod, idx) => {
     const filename = mod?.filename || mod?.name
-    if (!filename || !filename.toLowerCase().endsWith('.jar')) return
+    if (!filename || !/\.jar(\.disabled)?$/i.test(filename)) return
     // Already identified by the install manifest — no guessing, no network.
     if (mod.displayTitle) return
 

@@ -26,9 +26,57 @@ const currentServer = computed(() => {
   return { id: currentId.value, name: currentId.value || 'Unknown', loader: '', version: '', status: 'unknown' }
 })
 
-const otherServers = computed(() =>
-  store.serversList.filter((s) => s.id !== currentId.value)
+// Saved order, not current-first: the order shown is the order being edited,
+// and the top server is the one the panel opens on (#84).
+const orderedServers = computed(() =>
+  store.serversList.some((s) => s.id === currentId.value)
+    ? store.serversList
+    : [currentServer.value, ...store.serversList]
 )
+
+const canReorder = computed(() => store.serversList.length > 1)
+
+// Drag to reorder via Pointer Events rather than HTML5 drag-and-drop, which
+// never fires on touch. The list reorders live while dragging; one save on drop.
+const dragId = ref(null)
+let dragMoved = false
+
+const moveServer = (id, toIndex) => {
+  const list = [...store.serversList]
+  const from = list.findIndex((s) => s.id === id)
+  if (from < 0 || from === toIndex || toIndex < 0 || toIndex >= list.length) return false
+  list.splice(toIndex, 0, list.splice(from, 1)[0])
+  store.serversList = list
+  return true
+}
+
+const onDragStart = (event, id) => {
+  if (event.button !== 0) return
+  // Capture keeps move/up on the handle even once the pointer leaves it.
+  event.currentTarget.setPointerCapture(event.pointerId)
+  dragId.value = id
+  dragMoved = false
+}
+
+const onDragMove = (event) => {
+  if (!dragId.value) return
+  const overId = document.elementFromPoint(event.clientX, event.clientY)
+    ?.closest('.server-switcher__row')?.dataset.id
+  if (!overId || overId === dragId.value) return
+  const toIndex = store.serversList.findIndex((s) => s.id === overId)
+  if (moveServer(dragId.value, toIndex)) dragMoved = true
+}
+
+const onDragEnd = () => {
+  if (dragMoved) store.saveServerOrder()
+  dragId.value = null
+}
+
+// Keyboard fallback on the focused handle.
+const onHandleKey = (id, delta) => {
+  const from = store.serversList.findIndex((s) => s.id === id)
+  if (moveServer(id, from + delta)) store.saveServerOrder()
+}
 
 // Status-display logic consolidated in utils/getEffectiveStatus (F6/CC5).
 // Historical local fallback was 'unknown' (drift); now uses the util's
@@ -118,7 +166,7 @@ onBeforeUnmount(() => {
       type="button"
       class="server-switcher__trigger"
       :aria-expanded="open"
-      aria-haspopup="listbox"
+      aria-haspopup="true"
       :title="triggerTitle"
       @click="toggle"
     >
@@ -132,29 +180,45 @@ onBeforeUnmount(() => {
       </svg>
     </button>
 
-    <div v-if="open" class="server-switcher__dropdown" role="listbox">
-      <button
-        type="button"
-        class="server-switcher__item server-switcher__item--active"
-        role="option"
-        :aria-selected="true"
-        @click="close"
-      >
-        <span class="server-switcher__dot server-switcher__dot--small" :style="{ background: dotColor(currentServer) }"></span>
-        {{ currentServer.name }}
-      </button>
-      <button
-        v-for="s in otherServers"
+    <div v-if="open" class="server-switcher__dropdown">
+      <div
+        v-for="s in orderedServers"
         :key="s.id"
-        type="button"
-        class="server-switcher__item"
-        role="option"
-        :aria-selected="false"
-        @click="switchTo(s.id)"
+        class="server-switcher__row"
+        :class="{ 'is-dragging': s.id === dragId }"
+        :data-id="s.id"
       >
-        <span class="server-switcher__dot server-switcher__dot--small" :style="{ background: dotColor(s) }"></span>
-        {{ s.name }}
-      </button>
+        <button
+          type="button"
+          class="server-switcher__item"
+          :class="{ 'server-switcher__item--active': s.id === currentId }"
+          :aria-current="s.id === currentId ? 'true' : null"
+          @click="switchTo(s.id)"
+        >
+          <span class="server-switcher__dot server-switcher__dot--small" :style="{ background: dotColor(s) }"></span>
+          {{ s.name }}
+        </button>
+        <span
+          v-if="canReorder"
+          class="server-switcher__grip"
+          role="button"
+          tabindex="0"
+          :aria-label="`Reorder ${s.name}. Drag, or use arrow keys. The top server opens by default.`"
+          title="Drag to reorder — the top server opens by default"
+          @pointerdown="onDragStart($event, s.id)"
+          @pointermove="onDragMove"
+          @pointerup="onDragEnd"
+          @pointercancel="onDragEnd"
+          @keydown.up.prevent="onHandleKey(s.id, -1)"
+          @keydown.down.prevent="onHandleKey(s.id, 1)"
+        >
+          <svg width="10" height="12" viewBox="0 0 10 12" fill="currentColor" aria-hidden="true">
+            <circle cx="3" cy="2" r="1"/><circle cx="7" cy="2" r="1"/>
+            <circle cx="3" cy="6" r="1"/><circle cx="7" cy="6" r="1"/>
+            <circle cx="3" cy="10" r="1"/><circle cx="7" cy="10" r="1"/>
+          </svg>
+        </span>
+      </div>
 
       <div class="server-switcher__sep"></div>
 
@@ -294,13 +358,63 @@ onBeforeUnmount(() => {
   text-align: left;
 }
 
-.server-switcher__item:hover {
+.server-switcher__row {
+  display: flex;
+  align-items: center;
+}
+
+.server-switcher__row:hover {
   background: var(--bg-secondary);
+}
+
+.server-switcher__item:hover {
   color: var(--text-secondary);
 }
 
-.server-switcher__item--active {
+/* Drag handle: revealed on row hover/focus so the list stays quiet, and
+   always shown where there is no hover (touch). */
+.server-switcher__grip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-right: var(--space-1);
+  border-radius: var(--radius-sm);
+  color: var(--text-disabled);
+  cursor: grab;
+  /* Without this a touch drag scrolls the page instead of the row. */
+  touch-action: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.server-switcher__row:hover .server-switcher__grip,
+.server-switcher__grip:focus-visible,
+.server-switcher__row.is-dragging .server-switcher__grip {
+  opacity: 1;
+}
+
+.server-switcher__grip:hover,
+.server-switcher__grip:focus-visible {
   color: var(--text-primary);
+  outline: none;
+  background: var(--bg-tertiary);
+}
+
+.server-switcher__row.is-dragging {
+  background: var(--bg-secondary);
+  box-shadow: inset 2px 0 0 var(--primary);
+}
+
+.server-switcher__row.is-dragging .server-switcher__grip {
+  cursor: grabbing;
+}
+
+@media (hover: none) {
+  .server-switcher__grip {
+    opacity: 1;
+  }
 }
 
 .server-switcher__sep {

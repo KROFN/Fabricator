@@ -7,10 +7,15 @@
  * are reserved for behaviour you cannot read off the call itself.
  */
 
-import { get, post, put, del, ApiError } from './client'
+import { apiRequest, get, post, put, patch, del, ApiError } from './client'
 
 export async function getServers() {
   return get('/api/servers')
+}
+
+/** Persist the switcher order; the first server is the default on open. */
+export async function reorderServers(ids) {
+  return put('/api/servers/order', { ids })
 }
 
 export async function getServer(serverId, { heap = false } = {}) {
@@ -161,6 +166,24 @@ export async function removeMod(serverId, modName) {
 /** Bulk sibling of removeMod; answers with `{ deleted, errors }` per filename. */
 export async function bulkRemoveMods(serverId, filenames) {
   return del(`/api/servers/${serverId}/mods`, { filenames })
+}
+
+/** Rename jars to/from `.jar.disabled`; answers with `{ renamed, errors }`. */
+export async function setModsEnabled(serverId, filenames, enabled) {
+  return patch(`/api/servers/${serverId}/mods`, { filenames, enabled })
+}
+
+/** Any image; the backend crops and resizes it to the 64x64 server-icon.png. */
+export async function setServerIcon(serverId, file) {
+  return apiRequest(`/api/servers/${serverId}/icon`, {
+    method: 'PUT',
+    body: file,
+    headers: { 'Content-Type': file.type || 'application/octet-stream' }
+  })
+}
+
+export async function deleteServerIcon(serverId) {
+  return del(`/api/servers/${serverId}/icon`)
 }
 
 export async function getServerMetrics(serverId) {

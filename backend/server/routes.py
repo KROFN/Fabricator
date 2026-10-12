@@ -2,6 +2,7 @@
 from functools import lru_cache
 from pathlib import Path
 from typing import Optional
+import io
 import logging
 import math
 import os
@@ -11,7 +12,8 @@ import stat
 import threading
 import uuid
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, send_file
+from PIL import Image, ImageOps
 
 logger = logging.getLogger(__name__)
 
@@ -725,6 +727,16 @@ def get_servers():
     return jsonify(servers)
 
 
+@server_bp.route('/servers/order', methods=['PUT'])
+def reorder_servers():
+    """Persist the switcher order; the first server is the default on open (#84)."""
+    ids = (request.get_json(silent=True) or {}).get('ids')
+    if not isinstance(ids, list) or not all(isinstance(i, str) for i in ids):
+        return jsonify({'error': 'ids must be a list of server ids'}), 400
+    servers = storage.reorder_servers(ids)
+    return jsonify([_augment_with_runtime(server) for server in servers])
+
+
 @server_bp.route('/servers', methods=['POST'])
 def create_server():
     # C1 managed cap-1 lock: the only legitimate create is the first-boot
@@ -1265,6 +1277,140 @@ def bulk_delete_server_mods(server_id, server):
 
     storage.forget_content(server_id, forget_names)
     return jsonify({'success': True, 'deleted': deleted, 'errors': errors})
+
+
+DISABLED_SUFFIX = '.disabled'
+
+
+@server_bp.route('/servers/<server_id>/mods', methods=['PATCH'])
+@require_server
+def toggle_server_mods(server_id, server):
+    """Enable/disable jars by renaming ``x.jar`` <-> ``x.jar.disabled`` (#83).
+
+    Every loader only picks up ``*.jar``, and it's the convention launchers
+    like Prism use, so a jar disabled here stays disabled anywhere else.
+    """
+    data = request.get_json(silent=True) or {}
+    filenames = data.get('filenames', [])
+    enabled = data.get('enabled')
+    if not isinstance(filenames, list) or not filenames:
+        return jsonify({'error': 'filenames must be a non-empty list'}), 400
+    if not isinstance(enabled, bool):
+        return jsonify({'error': 'enabled must be a boolean'}), 400
+
+    try:
+        mods_path = _registry().resolve_mods_path(server)
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 400
+
+    renamed = {}
+    errors = []
+    for filename in filenames:
+        try:
+            target = _ensure_child_path(mods_path, filename)
+        except ValueError as exc:
+            errors.append({'filename': filename, 'error': str(exc)})
+            continue
+        if not target.is_file():
+            errors.append({'filename': filename, 'error': 'File not found'})
+            continue
+        name = target.name
+        is_disabled = name.lower().endswith('.jar' + DISABLED_SUFFIX)
+        if not is_disabled and not name.lower().endswith('.jar'):
+            errors.append({'filename': filename, 'error': 'Not a .jar file'})
+            continue
+        if is_disabled == (not enabled):
+            continue  # Already in the requested state.
+        new_name = name[:-len(DISABLED_SUFFIX)] if enabled else name + DISABLED_SUFFIX
+        destination = target.with_name(new_name)
+        if destination.exists():
+            errors.append({'filename': filename, 'error': f'{new_name} already exists'})
+            continue
+        try:
+            target.rename(destination)
+        except OSError as exc:
+            errors.append({'filename': filename, 'error': str(exc)})
+            continue
+        renamed[name] = new_name
+
+    storage.rename_content(server_id, renamed)
+    return jsonify({'success': True, 'renamed': renamed, 'errors': errors})
+
+
+SERVER_ICON = 'server-icon.png'
+ICON_MAX_BYTES = 10 * 1024 * 1024
+# Checked before decoding: a small PNG can still expand to gigabytes of pixels.
+ICON_MAX_PIXELS = 4096 * 4096
+
+
+def _server_icon_path(server: dict) -> Path:
+    return _registry().resolve_install_path(server) / SERVER_ICON
+
+
+@server_bp.route('/servers/<server_id>/icon', methods=['GET'])
+@require_server
+def get_server_icon(server_id, server):
+    try:
+        path = _server_icon_path(server)
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 400
+    # A symlink is refused, not followed: this route is token-readable, and
+    # send_file would otherwise serve whatever file the link points at.
+    if not path.is_file() or path.is_symlink():
+        return jsonify({'error': 'No server icon'}), 404
+    return send_file(path, mimetype='image/png', max_age=0)
+
+
+@server_bp.route('/servers/<server_id>/icon', methods=['PUT'])
+@require_server
+def set_server_icon(server_id, server):
+    """Turn any image into the 64x64 ``server-icon.png`` Minecraft shows in
+    the server list (#85). The raw image is the request body. Non-square images
+    are centre-cropped rather than squashed. Read at server start only.
+    """
+    if request.content_length and request.content_length > ICON_MAX_BYTES:
+        return jsonify({'error': 'Image is larger than 10 MB'}), 413
+    data = request.stream.read(ICON_MAX_BYTES + 1)
+    if len(data) > ICON_MAX_BYTES:
+        return jsonify({'error': 'Image is larger than 10 MB'}), 413
+
+    try:
+        with Image.open(io.BytesIO(data)) as img:
+            if img.width * img.height > ICON_MAX_PIXELS:
+                return jsonify({'error': 'Image dimensions are too large'}), 400
+            icon = ImageOps.fit(ImageOps.exif_transpose(img).convert('RGBA'), (64, 64), Image.LANCZOS)
+    except (OSError, ValueError, Image.DecompressionBombError):
+        return jsonify({'error': 'Not a supported image file'}), 400
+
+    try:
+        target = _server_icon_path(server)
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 400
+    if not target.parent.is_dir():
+        return jsonify({'error': 'Server is not installed yet'}), 409
+    if target.is_symlink():
+        return jsonify({'error': f'{SERVER_ICON} is a symlink'}), 409
+
+    staged = target.with_name(f'.{SERVER_ICON}.{uuid.uuid4().hex}')
+    try:
+        icon.save(staged, 'PNG')
+        os.replace(staged, target)
+    except OSError as exc:
+        staged.unlink(missing_ok=True)
+        return jsonify({'error': f'Failed to save icon: {exc}'}), 500
+    return jsonify({'success': True})
+
+
+@server_bp.route('/servers/<server_id>/icon', methods=['DELETE'])
+@require_server
+def delete_server_icon(server_id, server):
+    try:
+        path = _server_icon_path(server)
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 400
+    if path.is_file() and not path.is_symlink():
+        _unlink_with_retry(path)
+    return jsonify({'success': True})
 
 
 @server_bp.route('/servers/<server_id>/settings', methods=['PUT'])

@@ -21,6 +21,9 @@ _READ = [
     ("GET", "/api/servers/<server_id>"),
     ("GET", "/api/servers/<server_id>/logs"),
     ("GET", "/api/servers/<server_id>/mods"),
+    # Server icon (#85). Audited CLEAN: fixed filename in the stored install
+    # path, no caller input reaches it, symlinks refused, body is PNG bytes.
+    ("GET", "/api/servers/<server_id>/icon"),
     ("GET", "/api/servers/<server_id>/install/progress"),
     ("GET", "/api/servers/<server_id>/java-status"),
     ("GET", "/api/servers/<server_id>/metrics"),
@@ -66,6 +69,10 @@ _MANAGE = [
     ("POST", "/api/modrinth/mod/<mod_id>/install"),
     ("DELETE", "/api/servers/<server_id>/mods"),
     ("DELETE", "/api/servers/<server_id>/mods/<path:filename>"),
+    # Enable/disable (#83). Audited CLEAN: filenames are confined to mods/ by
+    # _ensure_child_path and only renamed .jar <-> .jar.disabled in place;
+    # no new reach beyond install/delete above. Error text is path-scrubbed.
+    ("PATCH", "/api/servers/<server_id>/mods"),
 ]
 
 # --- NEVER: no token, either scope ------------------------------------------ #
@@ -85,6 +92,10 @@ _NEVER = [
     ("PUT", "/api/servers/<server_id>/autostart"),
     ("DELETE", "/api/servers/<server_id>"),
     ("POST", "/api/servers"),
+    ("PUT", "/api/servers/order"),
+    # Server icon (#85): writes server-icon.png into the install path.
+    ("PUT", "/api/servers/<server_id>/icon"),
+    ("DELETE", "/api/servers/<server_id>/icon"),
     # host-level java
     ("POST", "/api/java/install"),
     ("DELETE", "/api/java/install/<task_id>"),

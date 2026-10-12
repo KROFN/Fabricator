@@ -17,6 +17,7 @@ const onSearch = (event) => { store.modSearch = event.target.value }
  *  Modrinth release when the install manifest knows it, else 'local'. */
 const modMeta = (mod) => {
   const parts = []
+  if (mod.disabled) parts.push('disabled')
   if (mod.version) parts.push(mod.version)
   const update = store.modUpdates[mod.filename]
   if (update) parts.push(`update: ${update.versionNumber}`)
@@ -156,6 +157,22 @@ const selectAllLabel = computed(() => {
             Clear
           </button>
           <AppButton
+            v-if="store.selectedDisabledCount > 0"
+            variant="ghost"
+            :loading="store.togglingMods"
+            @click="store.setSelectedModsEnabled(true)"
+          >
+            Enable {{ store.selectedDisabledCount }}
+          </AppButton>
+          <AppButton
+            v-if="store.selectedEnabledCount > 0"
+            variant="ghost"
+            :loading="store.togglingMods"
+            @click="store.setSelectedModsEnabled(false)"
+          >
+            Disable {{ store.selectedEnabledCount }}
+          </AppButton>
+          <AppButton
             variant="danger"
             :loading="store.bulkDeleting"
             @click="store.handleBulkRemoveMods"
@@ -179,6 +196,7 @@ const selectAllLabel = computed(() => {
           :description="mod.filename"
           :meta="modMeta(mod)"
           :selected="store.selectedModPaths.has(mod.path)"
+          :class="{ 'mods-page__card--disabled': mod.disabled }"
         >
           <template #lead>
             <label
@@ -211,7 +229,7 @@ const selectAllLabel = computed(() => {
               </svg>
             </a>
             <button
-              v-if="modrinthProjectUrl(mod)"
+              v-if="modrinthProjectUrl(mod) && !mod.disabled"
               type="button"
               class="mods-page__version-btn"
               :title="`Change the installed version of ${installedModDisplayName(mod)}`"
@@ -409,6 +427,14 @@ const selectAllLabel = computed(() => {
   display: grid;
   gap: var(--space-3);
   padding: var(--space-4);
+}
+
+/* Disabled jars (#83): dim the content, not the checkbox or actions, so the
+   row can still be selected and re-enabled. */
+.mods-page__card--disabled :deep(.search-result-card__icon),
+.mods-page__card--disabled :deep(.search-result-card__body) {
+  opacity: 0.45;
+  filter: grayscale(1);
 }
 
 .mods-page__item-checkbox-label {
