@@ -14,6 +14,7 @@ import {
   getInstalledMods,
   removeMod,
   bulkRemoveMods,
+  setModsEnabled,
   getServerLogs,
   startServer,
   stopServer,
@@ -131,6 +132,7 @@ export const useServerStore = defineStore('server', () => {
   const modToRemove = ref(null)
   const selectedModPaths = ref(new Set())
   const bulkDeleting = ref(false)
+  const togglingMods = ref(false)
   // filename -> { projectId, versionId, versionNumber } for jars with a newer
   // compatible release (#80).
   const modUpdates = ref({})
@@ -440,6 +442,10 @@ export const useServerStore = defineStore('server', () => {
 
   const selectedCount = computed(() => selectedModPaths.value.size)
 
+  const selectedMods = computed(() => installedMods.value.filter((m) => selectedModPaths.value.has(m.path)))
+  const selectedEnabledCount = computed(() => selectedMods.value.filter((m) => !m.disabled).length)
+  const selectedDisabledCount = computed(() => selectedMods.value.length - selectedEnabledCount.value)
+
   const allFilteredSelected = computed(() =>
     filteredMods.value.length > 0 &&
     filteredMods.value.every((m) => selectedModPaths.value.has(m.path))
@@ -562,6 +568,7 @@ export const useServerStore = defineStore('server', () => {
           size: file.size,
           updatedAt: file.updatedAt,
           path: file.path,
+          disabled: /\.jar\.disabled$/i.test(file.name),
           source: recorded ? 'Modrinth' : 'Local',
           category: 'Mods Folder'
         }
@@ -1381,6 +1388,29 @@ export const useServerStore = defineStore('server', () => {
     }
   }
 
+  async function setSelectedModsEnabled(enabled) {
+    const filenames = selectedMods.value.filter((m) => m.disabled === enabled).map((m) => m.filename)
+    if (!filenames.length || togglingMods.value) return
+    togglingMods.value = true
+    try {
+      const { renamed, errors } = await setModsEnabled(currentServerId.value, filenames, enabled)
+      const n = Object.keys(renamed || {}).length
+      const verb = enabled ? 'enabled' : 'disabled'
+      if (n) {
+        const restart = serverStatus.value.status === 'running' ? ' Restart the server to apply.' : ''
+        toast.success(`${n} mod${n === 1 ? '' : 's'} ${verb}.${restart}`, enabled ? 'Mods Enabled' : 'Mods Disabled')
+      }
+      if (errors?.length) toast.error(`${errors[0].filename}: ${errors[0].error}`, `${errors.length} not ${verb}`)
+      await loadMods()
+    } catch (error) {
+      console.error('Failed to toggle mods:', error)
+      toast.error(`Failed to ${enabled ? 'enable' : 'disable'} selected mods`, 'Error')
+    } finally {
+      selectedModPaths.value = new Set()
+      togglingMods.value = false
+    }
+  }
+
   async function performServerAction(action, fn, successMessage) {
     if (actionState.value[action]) return
     actionState.value[action] = true
@@ -1588,6 +1618,7 @@ export const useServerStore = defineStore('server', () => {
     modToRemove.value = null
     selectedModPaths.value = new Set()
     bulkDeleting.value = false
+    togglingMods.value = false
     modUpdates.value = {}
     modUpdateDeps.value = []
     updatingMods.value = false
@@ -1649,6 +1680,9 @@ export const useServerStore = defineStore('server', () => {
     modToRemove,
     selectedModPaths,
     bulkDeleting,
+    togglingMods,
+    selectedEnabledCount,
+    selectedDisabledCount,
     modUpdates,
     updatingMods,
     installLoading,
@@ -1759,6 +1793,7 @@ export const useServerStore = defineStore('server', () => {
     toggleSelectAllMods,
     clearModSelection,
     handleBulkRemoveMods,
+    setSelectedModsEnabled,
     updateAllMods,
     handleStart,
     handleInstall,

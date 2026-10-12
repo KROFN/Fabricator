@@ -1267,6 +1267,64 @@ def bulk_delete_server_mods(server_id, server):
     return jsonify({'success': True, 'deleted': deleted, 'errors': errors})
 
 
+DISABLED_SUFFIX = '.disabled'
+
+
+@server_bp.route('/servers/<server_id>/mods', methods=['PATCH'])
+@require_server
+def toggle_server_mods(server_id, server):
+    """Enable/disable jars by renaming ``x.jar`` <-> ``x.jar.disabled`` (#83).
+
+    Every loader only picks up ``*.jar``, and it's the convention launchers
+    like Prism use, so a jar disabled here stays disabled anywhere else.
+    """
+    data = request.get_json(silent=True) or {}
+    filenames = data.get('filenames', [])
+    enabled = data.get('enabled')
+    if not isinstance(filenames, list) or not filenames:
+        return jsonify({'error': 'filenames must be a non-empty list'}), 400
+    if not isinstance(enabled, bool):
+        return jsonify({'error': 'enabled must be a boolean'}), 400
+
+    try:
+        mods_path = _registry().resolve_mods_path(server)
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 400
+
+    renamed = {}
+    errors = []
+    for filename in filenames:
+        try:
+            target = _ensure_child_path(mods_path, filename)
+        except ValueError as exc:
+            errors.append({'filename': filename, 'error': str(exc)})
+            continue
+        if not target.is_file():
+            errors.append({'filename': filename, 'error': 'File not found'})
+            continue
+        name = target.name
+        is_disabled = name.lower().endswith('.jar' + DISABLED_SUFFIX)
+        if not is_disabled and not name.lower().endswith('.jar'):
+            errors.append({'filename': filename, 'error': 'Not a .jar file'})
+            continue
+        if is_disabled == (not enabled):
+            continue  # Already in the requested state.
+        new_name = name[:-len(DISABLED_SUFFIX)] if enabled else name + DISABLED_SUFFIX
+        destination = target.with_name(new_name)
+        if destination.exists():
+            errors.append({'filename': filename, 'error': f'{new_name} already exists'})
+            continue
+        try:
+            target.rename(destination)
+        except OSError as exc:
+            errors.append({'filename': filename, 'error': str(exc)})
+            continue
+        renamed[name] = new_name
+
+    storage.rename_content(server_id, renamed)
+    return jsonify({'success': True, 'renamed': renamed, 'errors': errors})
+
+
 @server_bp.route('/servers/<server_id>/settings', methods=['PUT'])
 @require_server
 @with_server_lock

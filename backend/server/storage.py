@@ -306,6 +306,31 @@ def forget_content(server_id: str, filenames: List[str]) -> None:
             return
 
 
+def rename_content(server_id: str, renames: Dict[str, str]) -> None:
+    """Move manifest entries to new filenames (``{old: new}``) — enable/disable
+    renames the jar, and its Modrinth identity has to follow it."""
+    if not renames:
+        return
+    with _storage_lock:
+        servers = load_servers()
+        for server in servers:
+            if server.get('id') != server_id:
+                continue
+            manifest = server.get(CONTENT_MANIFEST_KEY)
+            if not isinstance(manifest, dict):
+                return
+            moved = False
+            for old, new in renames.items():
+                if old in manifest:
+                    manifest[new] = manifest.pop(old)
+                    moved = True
+            if moved:
+                server[CONTENT_MANIFEST_KEY] = manifest
+                server['updatedAt'] = iso_z_now()
+                save_servers(servers)
+            return
+
+
 def clear_content_manifest(server_id: str) -> None:
     """Wipe the whole manifest — for flows that replace the folder wholesale
     (e.g. a clean modpack install)."""

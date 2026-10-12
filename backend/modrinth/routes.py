@@ -281,7 +281,8 @@ def resolve_installed_mods(server_id, server):
 
     jars = sorted(
         path for path in mods_path.iterdir()
-        if path.is_file() and path.suffix.lower() == '.jar'
+        # Disabled jars (#83) still want their title and icon in the list.
+        if path.is_file() and path.name.lower().endswith(('.jar', '.jar.disabled'))
     )
 
     try:

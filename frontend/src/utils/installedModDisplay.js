@@ -3,7 +3,7 @@ export function installedModDisplayName(mod) {
   if (!mod) return ''
   if (mod.displayTitle) return mod.displayTitle
   const n = mod.name || mod.filename || ''
-  return n.replace(/\.jar$/i, '')
+  return n.replace(/\.jar(\.disabled)?$/i, '')
 }
 
 /** Single-letter placeholder when no project icon is available */

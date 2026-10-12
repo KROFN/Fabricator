@@ -373,6 +373,15 @@ Bulk delete. **Body:** `{ "filenames": ["a.jar", "b.jar"] }`
 **Response (200):** `{ "success": true, "deleted": ["a.jar"], "errors": [{ "filename": "b.jar", "error": "File not found" }] }`
 **Error (400):** `filenames` missing or empty
 
+#### `PATCH /api/servers/<server_id>/mods`
+
+Bulk enable/disable by renaming `x.jar` ↔ `x.jar.disabled`. Loaders only load `*.jar`, so a disabled jar stays in the list but isn't loaded; takes effect on the next start. Jars already in the requested state are skipped silently.
+
+**Body:** `{ "filenames": ["a.jar", "b.jar.disabled"], "enabled": false }`
+
+**Response (200):** `{ "success": true, "renamed": { "a.jar": "a.jar.disabled" }, "errors": [{ "filename": "c.jar", "error": "c.jar.disabled already exists" }] }`
+**Error (400):** `filenames` missing or empty, or `enabled` not a boolean
+
 ---
 
 ## Console & metrics
@@ -1471,7 +1480,7 @@ token list; the `<secret>` half is what is never shown again.
 | Scope | Can do |
 |---|---|
 | `read` | Read-only routes: server list and details, logs, installed mods, metrics, Java status, backups and snapshot listings, the Modrinth catalog. |
-| `manage` | Everything `read` can do, plus start / stop / restart, re-install the configured loader, install or update a mod by Modrinth ID, and remove installed mods. |
+| `manage` | Everything `read` can do, plus start / stop / restart, re-install the configured loader, install or update a mod by Modrinth ID, and remove, enable or disable installed mods. |
 
 Every `/api` route is classified into exactly one of three buckets, and the classification is
 enforced by the panel itself, not by the client: **32 read**, **7 manage**, **58 never**. Routes in

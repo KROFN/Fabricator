@@ -66,6 +66,8 @@ _MANAGE = [
     ("POST", "/api/modrinth/mod/<mod_id>/install"),
     ("DELETE", "/api/servers/<server_id>/mods"),
     ("DELETE", "/api/servers/<server_id>/mods/<path:filename>"),
+    # Enable/disable only renames jars already in mods/ (#83).
+    ("PATCH", "/api/servers/<server_id>/mods"),
 ]
 
 # --- NEVER: no token, either scope ------------------------------------------ #
