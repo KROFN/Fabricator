@@ -222,6 +222,19 @@ def delete_server(server_id: str) -> bool:
         return False
 
 
+def reorder_servers(ids: List[str]) -> List[Dict[str, Any]]:
+    """Rewrite servers.json in the order of ``ids`` (#84). The first server is
+    the one the panel opens on. Unknown ids are ignored, and servers missing
+    from ``ids`` (e.g. created in another tab) keep their order at the end."""
+    with _storage_lock:
+        servers = load_servers()
+        rank = {sid: i for i, sid in enumerate(ids)}
+        # sorted() is stable, so unranked servers keep their relative order.
+        servers.sort(key=lambda s: rank.get(s.get('id'), len(rank)))
+        save_servers(servers)
+        return servers
+
+
 def update_server_status(server_id: str, status: str) -> Optional[Dict[str, Any]]:
     """Update server status.
 

@@ -11,6 +11,7 @@ import {
 import {
   getServer,
   getServers,
+  reorderServers,
   getInstalledMods,
   removeMod,
   bulkRemoveMods,
@@ -515,6 +516,19 @@ export const useServerStore = defineStore('server', () => {
       // Returns a tuple so opt-in callers (e.g. Servers.vue) can surface the
       // error UI; internal callers ignore the return value.
       return { ok: false, error }
+    }
+  }
+
+  /** Persist the current `serversList` order (#84) — the switcher reorders
+   *  the list locally while dragging and saves once on drop. A failed save
+   *  reloads the real order. */
+  async function saveServerOrder() {
+    try {
+      await reorderServers(serversList.value.map((s) => s.id))
+    } catch (error) {
+      console.error('Failed to reorder servers:', error)
+      toast.error('Failed to save server order', 'Error')
+      loadServers()
     }
   }
 
@@ -1745,6 +1759,7 @@ export const useServerStore = defineStore('server', () => {
     recallPreviousCommand,
     recallNextCommand,
     loadServers,
+    saveServerOrder,
     loadServer,
     loadMods,
     loadLogs,

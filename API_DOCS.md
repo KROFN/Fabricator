@@ -100,7 +100,14 @@ Clears the session. **Response (200):** `{ "authenticated": false }`
 #### `GET /api/servers`
 
 List all servers. Each record is augmented with a `runtime` block from the process registry
-(live status, PID, RAM, mod count).
+(live status, PID, RAM, mod count). Returned in saved order; the first server is the one the panel opens on.
+
+#### `PUT /api/servers/order`
+
+Reorder the server list. **Body:** `{ "ids": ["srv_b", "srv_a"] }`. Unknown ids are ignored; servers not listed keep their order at the end.
+
+**Response (200):** the reordered list, same shape as `GET /api/servers`.
+**Error (400):** `ids` not a list of strings
 
 #### `POST /api/servers`
 

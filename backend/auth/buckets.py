@@ -87,6 +87,7 @@ _NEVER = [
     ("PUT", "/api/servers/<server_id>/autostart"),
     ("DELETE", "/api/servers/<server_id>"),
     ("POST", "/api/servers"),
+    ("PUT", "/api/servers/order"),
     # host-level java
     ("POST", "/api/java/install"),
     ("DELETE", "/api/java/install/<task_id>"),

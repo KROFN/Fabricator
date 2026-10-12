@@ -725,6 +725,16 @@ def get_servers():
     return jsonify(servers)
 
 
+@server_bp.route('/servers/order', methods=['PUT'])
+def reorder_servers():
+    """Persist the switcher order; the first server is the default on open (#84)."""
+    ids = (request.get_json(silent=True) or {}).get('ids')
+    if not isinstance(ids, list) or not all(isinstance(i, str) for i in ids):
+        return jsonify({'error': 'ids must be a list of server ids'}), 400
+    servers = storage.reorder_servers(ids)
+    return jsonify([_augment_with_runtime(server) for server in servers])
+
+
 @server_bp.route('/servers', methods=['POST'])
 def create_server():
     # C1 managed cap-1 lock: the only legitimate create is the first-boot

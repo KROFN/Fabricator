@@ -13,6 +13,11 @@ export async function getServers() {
   return get('/api/servers')
 }
 
+/** Persist the switcher order; the first server is the default on open. */
+export async function reorderServers(ids) {
+  return put('/api/servers/order', { ids })
+}
+
 export async function getServer(serverId, { heap = false } = {}) {
   return get(`/api/servers/${serverId}${heap ? '?heap=1' : ''}`)
 }
