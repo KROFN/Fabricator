@@ -1354,7 +1354,9 @@ def get_server_icon(server_id, server):
         path = _server_icon_path(server)
     except ValueError as exc:
         return jsonify({'error': str(exc)}), 400
-    if not path.is_file():
+    # A symlink is refused, not followed: this route is token-readable, and
+    # send_file would otherwise serve whatever file the link points at.
+    if not path.is_file() or path.is_symlink():
         return jsonify({'error': 'No server icon'}), 404
     return send_file(path, mimetype='image/png', max_age=0)
 

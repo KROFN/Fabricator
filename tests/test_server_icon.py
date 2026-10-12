@@ -38,3 +38,11 @@ def test_icon_rejects_non_images_and_huge_dimensions(client, tmp_servers_root):
     Image.new("1", (5000, 5000)).save(buf, "PNG")  # tiny file, 25M pixels
     assert client.put("/api/servers/srv1/icon", data=buf.getvalue()).status_code == 400
     assert not (install / "server-icon.png").exists()
+
+
+def test_icon_symlink_is_not_followed(client, tmp_servers_root):
+    install = _seed_server(tmp_servers_root)
+    secret = tmp_servers_root / "secret.txt"
+    secret.write_text("do not serve")
+    (install / "server-icon.png").symlink_to(secret)
+    assert client.get("/api/servers/srv1/icon").status_code == 404

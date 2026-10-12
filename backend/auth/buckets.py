@@ -21,6 +21,8 @@ _READ = [
     ("GET", "/api/servers/<server_id>"),
     ("GET", "/api/servers/<server_id>/logs"),
     ("GET", "/api/servers/<server_id>/mods"),
+    # Server icon (#85). Audited CLEAN: fixed filename in the stored install
+    # path, no caller input reaches it, symlinks refused, body is PNG bytes.
     ("GET", "/api/servers/<server_id>/icon"),
     ("GET", "/api/servers/<server_id>/install/progress"),
     ("GET", "/api/servers/<server_id>/java-status"),
@@ -67,7 +69,9 @@ _MANAGE = [
     ("POST", "/api/modrinth/mod/<mod_id>/install"),
     ("DELETE", "/api/servers/<server_id>/mods"),
     ("DELETE", "/api/servers/<server_id>/mods/<path:filename>"),
-    # Enable/disable only renames jars already in mods/ (#83).
+    # Enable/disable (#83). Audited CLEAN: filenames are confined to mods/ by
+    # _ensure_child_path and only renamed .jar <-> .jar.disabled in place;
+    # no new reach beyond install/delete above. Error text is path-scrubbed.
     ("PATCH", "/api/servers/<server_id>/mods"),
 ]
 
