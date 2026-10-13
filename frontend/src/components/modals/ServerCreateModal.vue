@@ -738,38 +738,7 @@ export default {
         { value: 'pufferfish', label: 'Pufferfish' },
         { value: 'vanilla',    label: 'Vanilla'    }
       ],
-      formData: {
-        setupMode: 'custom',
-        // Search first: browsing by name is how most people arrive at a
-        // pack. A link or slug assumes you already have one in hand.
-        modpackImportMethod: 'search',
-        name: '',
-        version: '',
-        loader: '',
-        port: 25565,
-        installPath: '',
-        maxPlayers: 20,
-        difficulty: 'normal',
-        gamemode: 'survival',
-        viewDistance: 10,
-        levelName: 'world',
-        levelType: 'default',
-        seed: '',
-        generateStructures: true,
-        spawnAnimals: true,
-        spawnMonsters: true,
-        spawnNpcs: true,
-        memoryMin: 2,
-        memory: 4,
-        javaPath: '',
-        simulationDistance: 10,
-        onlineMode: true,
-        whitelist: false,
-        pvp: true,
-        commandBlocks: true,
-        motd: this.$t('createServer.defaultMotd'),
-        acceptEula: false
-      }
+      formData: this.defaultFormData()
     };
   },
   created() {
@@ -1761,15 +1730,14 @@ export default {
       }
     },
     
-    resetForm({ keepJavaModal = false } = {}) {
-      const preservedVersion = this.formData.version
-      // Nothing to restore into a form that is being rebuilt from scratch.
-      this.prePackSelection = null
-      this.formData = {
+    defaultFormData(version = '') {
+      return {
         setupMode: 'custom',
+        // Search first: browsing by name is how most people arrive at a
+        // pack. A link or slug assumes you already have one in hand.
         modpackImportMethod: 'search',
         name: '',
-        version: preservedVersion || (this.gameVersions[0]?.version || ''),
+        version,
         loader: '',
         port: 25565,
         installPath: '',
@@ -1792,9 +1760,16 @@ export default {
         whitelist: false,
         pvp: true,
         commandBlocks: true,
-        motd: this.$t('createServer.motdPlaceholder'),
+        motd: this.$t('createServer.defaultMotd'),
         acceptEula: false
       }
+    },
+
+    resetForm({ keepJavaModal = false } = {}) {
+      const preservedVersion = this.formData.version
+      // Nothing to restore into a form that is being rebuilt from scratch.
+      this.prePackSelection = null
+      this.formData = this.defaultFormData(preservedVersion || (this.gameVersions[0]?.version || ''))
       this.javaStatus = null
       this.javaRequirementWarning = ''
       if (!keepJavaModal) {
