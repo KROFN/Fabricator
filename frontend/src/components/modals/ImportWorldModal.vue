@@ -133,7 +133,7 @@ function onCancel() {
           ></div>
         </div>
         <span class="import-world-modal__progress-label">
-          {{ indeterminate ? $t('backups.import.uploading') : $t('backups.import.uploadingPct', { pct: uploadPct }) }}
+          {{ indeterminate ? $t('common.uploading') : $t('backups.import.uploadingPct', { pct: uploadPct }) }}
         </span>
       </div>
 
@@ -159,7 +159,7 @@ function onCancel() {
         :loading="busy"
         @click="onConfirm"
       >
-        {{ uploading ? $t('backups.import.uploading') : jobActive ? $t('backups.import.importing') : $t('backups.import.confirm') }}
+        {{ uploading ? $t('common.uploading') : jobActive ? $t('backups.import.importing') : $t('backups.import.confirm') }}
       </AppButton>
     </template>
   </BaseModal>

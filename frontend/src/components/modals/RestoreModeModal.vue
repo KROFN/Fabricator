@@ -39,7 +39,7 @@ const restoreActive = computed(
 
 const phaseLabel = computed(() => {
   const phase = props.activeJob?.phase
-  if (!phase) return t('backups.restore.working')
+  if (!phase) return t('common.working')
   const key = `backups.restore.phase.${phase}`
   return te(key) ? t(key) : phase
 })
