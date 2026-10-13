@@ -208,3 +208,19 @@ def test_relaunched_process_reports_swap_result(monkeypatch, result, code):
     assert status["inProgress"] is False
     assert status["lastExitCode"] == code
     assert (status["lastError"] is None) == (code == 0)
+
+
+def test_latest_tag_skips_mcp_and_prereleases(monkeypatch):
+    releases = [
+        {"tag_name": "mcp-v0.2.0"},
+        {"tag_name": "v2.0.0-beta", "prerelease": True},
+        {"tag_name": "v1.9.0", "draft": True},
+        {"tag_name": "v1.8.0"},
+    ]
+    monkeypatch.setitem(update_module._tag_cache, "tag", None)
+    monkeypatch.setitem(update_module._tag_cache, "fetched_at", 0.0)
+    monkeypatch.setattr(
+        update_module.request, "urlopen",
+        lambda req, timeout=None: io.BytesIO(json.dumps(releases).encode()),
+    )
+    assert update_module._fetch_latest_tag("r") == "v1.8.0"

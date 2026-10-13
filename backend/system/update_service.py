@@ -68,16 +68,21 @@ def _fetch_latest_tag(repo: str) -> Optional[str]:
         if time.time() - _tag_cache["fetched_at"] < _TAG_CACHE_TTL:
             return _tag_cache["tag"]
 
-    url = f"https://api.github.com/repos/{repo}/releases/latest"
+    # Same filter as install.sh's get_latest_tag: GitHub's /releases/latest can
+    # be an mcp-v* release, which has no panel assets.
+    url = f"https://api.github.com/repos/{repo}/releases?per_page=100"
     req = request.Request(url, headers={"Accept": "application/vnd.github+json"})
     tag: Optional[str] = None
     try:
         with request.urlopen(req, timeout=10) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-            value = payload.get("tag_name")
-            if isinstance(value, str) and value:
-                tag = value
-    except (error.URLError, error.HTTPError, TimeoutError, OSError, json.JSONDecodeError):
+            releases = json.loads(response.read().decode("utf-8"))
+        tag = next((
+            r["tag_name"] for r in releases
+            if isinstance(r, dict) and isinstance(r.get("tag_name"), str)
+            and r["tag_name"].startswith("v")
+            and not r.get("draft") and not r.get("prerelease")
+        ), None)
+    except (error.URLError, error.HTTPError, TimeoutError, OSError, ValueError, TypeError):
         pass
 
     with _tag_cache_lock:
