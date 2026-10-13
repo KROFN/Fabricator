@@ -46,7 +46,7 @@ const handleCreateServer = (createdServer) => {
 <template>
   <router-view />
   <ServerCreateModal
-    v-if="!auth.managed"
+    v-if="!auth.managed && (auth.isAuthenticated || !auth.enabled)"
     :show="showCreateModal"
     @close="showCreateModal = false"
     @create="handleCreateServer"
