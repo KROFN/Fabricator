@@ -47,7 +47,7 @@ import { installedEntryMatchesProjectRef } from '../utils/modrinthJarMatch'
 import { getEffectiveStatus as pickEffectiveStatus } from '../utils/getEffectiveStatus'
 import {
   createProgressPoller,
-  LOST_CONTACT_MESSAGE,
+  lostContactMessage,
   POLL_INTERVAL_MS
 } from '../utils/pollProgress'
 
@@ -1496,7 +1496,7 @@ export const useServerStore = defineStore('server', () => {
       if (lostContact) {
         // Deliberately a warning, not an error: we do not know that the install
         // failed, and it most likely did not.
-        toast.warning(LOST_CONTACT_MESSAGE, 'Server Installation')
+        toast.warning(lostContactMessage(), 'Server Installation')
       } else if (progress.phase === 'done') {
         toast.success('Server installed successfully.', 'Server Installation')
       } else {

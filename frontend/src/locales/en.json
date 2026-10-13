@@ -1,0 +1,164 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "confirmAction": "Confirm Action",
+    "close": "Close",
+    "delete": "Delete",
+    "retry": "Retry",
+    "install": "Install",
+    "installing": "Installing...",
+    "processing": "Processing...",
+    "unknown": "Unknown",
+    "error": "Error"
+  },
+  "errors": {
+    "network": "Network error occurred",
+    "requestFailed": "Request failed with status {status}"
+  },
+  "status": {
+    "running": "Running",
+    "stopped": "Stopped",
+    "pending": "Install Required",
+    "installing": "Installing",
+    "failed": "Failed",
+    "unknown": "Unknown"
+  },
+  "content": {
+    "mod": "Mod | Mods",
+    "plugin": "Plugin | Plugins"
+  },
+  "nav": {
+    "overview": "Overview",
+    "console": "Console",
+    "players": "Players",
+    "files": "Files",
+    "backups": "Backups",
+    "playit": "playit.gg",
+    "properties": "Properties",
+    "settings": "Settings"
+  },
+  "sidebar": {
+    "openMenu": "Open navigation menu",
+    "closeMenu": "Close navigation menu",
+    "closeMenuTitle": "Close menu",
+    "expand": "Expand sidebar",
+    "collapse": "Collapse sidebar",
+    "allServers": "Fabricator — all servers",
+    "noServers": "No servers yet",
+    "noServersTitle": "No servers yet — create one",
+    "navLabel": "Server navigation",
+    "lock": "Lock"
+  },
+  "update": {
+    "title": "Fabricator Update",
+    "finished": "Update finished. Refresh the page if it does not reload automatically.",
+    "exitCode": "Exit code {code}",
+    "failed": "Update failed",
+    "started": "Update started in background",
+    "startFailed": "Unable to start update",
+    "triggerFailed": "Failed to trigger update",
+    "managedByImage": "Managed by image",
+    "updating": "Updating…",
+    "available": "Update available",
+    "upToDate": "Up to date",
+    "confirmTitle": "Run Fabricator update?",
+    "confirmMessage": "Run Fabricator update now?",
+    "confirmDescription": "The service may restart briefly while preserving server data and config.",
+    "confirmButton": "Run update"
+  },
+  "topbar": {
+    "breadcrumb": "Breadcrumb",
+    "restart": "Restart",
+    "restarting": "Restarting",
+    "stop": "Stop",
+    "stopping": "Stopping"
+  },
+  "switcher": {
+    "reorderLabel": "Reorder {name}. Drag, or use arrow keys. The top server opens by default.",
+    "reorderTitle": "Drag to reorder — the top server opens by default",
+    "addServer": "Add server",
+    "status": {
+      "running": "running",
+      "stopped": "stopped",
+      "pending": "pending",
+      "installing": "installing",
+      "starting": "starting",
+      "stopping": "stopping",
+      "failed": "failed",
+      "unknown": "unknown"
+    }
+  },
+  "auth": {
+    "password": "Password",
+    "minLengthHint": "At least {min} characters.",
+    "login": {
+      "subtitle": "Enter the operator password to continue.",
+      "submit": "Log in",
+      "incorrectPassword": "Incorrect password.",
+      "failed": "Login failed. Please try again."
+    },
+    "setup": {
+      "title": "Welcome to Fabricator",
+      "subtitle": "Set an operator password to secure the panel.",
+      "confirmPassword": "Confirm password",
+      "submit": "Create password",
+      "tooShort": "Password must be at least {min} characters.",
+      "mismatch": "Passwords do not match.",
+      "failed": "Setup failed. Please try again."
+    }
+  },
+  "servers": {
+    "loading": "Loading servers…",
+    "loadFailed": "Failed to load servers",
+    "loadFailedTitle": "Couldn't load servers",
+    "emptyTitle": "No servers yet",
+    "emptySubtitle": "Create your first Minecraft server to get started.",
+    "create": "Create server",
+    "loadingServer": "Loading server data…",
+    "notFound": "Unable to find this server.",
+    "delete": {
+      "title": "Delete Server",
+      "message": "Delete this server permanently?",
+      "description": "All server files and backups will be deleted. This cannot be undone."
+    }
+  },
+  "createServer": {
+    "createdTitle": "Server Created",
+    "created": "Server \"{name}\" created successfully!",
+    "createdWithModpack": "Server \"{name}\" created. Selected modpack: {modpack}.",
+    "modpackFailedTitle": "Modpack Install Failed",
+    "createdModpackFailed": "Server \"{name}\" was created, but modpack install failed: {error}"
+  },
+  "modpacks": {
+    "installingTitle": "Installing Modpack...",
+    "confirmReplaceTitle": "Confirm Modpack Replace",
+    "preparing": "Preparing...",
+    "confirmInstall": "Install {title} on this server?",
+    "replaceDescription": "Pack-managed folders (mods, config, defaultconfigs, kubejs, scripts) will be replaced. World data, logs and backups stay intact. Server settings may be overwritten if the pack includes them. If some files are unavailable you will be asked whether to continue.",
+    "createBackup": "Create backup before installing",
+    "missingFilesTitle": "Missing Modpack Files",
+    "missingFiles": "{n} file could not be downloaded. | {n} files could not be downloaded.",
+    "installAnyway": "Install Anyway"
+  },
+  "install": {
+    "lostContact": "Lost contact with the panel while installing. The install is most likely still running in the background — reopen the server to check on it."
+  },
+  "editor": {
+    "syntaxError": "Syntax error"
+  },
+  "settings": {
+    "sections": {
+      "autostart": "Auto-start",
+      "autostartDescription": "What happens to this server when Fabricator starts up.",
+      "display": "Display",
+      "displayDescription": "Units and readouts used across the interface.",
+      "java": "Java",
+      "javaDescription": "Installed runtimes, and installing new ones.",
+      "mcp": "MCP",
+      "mcpDescription": "Model Context Protocol access for AI assistants.",
+      "security": "Security",
+      "securityDescription": "The password used to unlock Fabricator, and whether one is required."
+    }
+  }
+}

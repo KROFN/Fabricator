@@ -663,7 +663,7 @@ import FormField from '../ui/FormField.vue'
 import { createServer, installServer, getLoaderGameVersions, getJavaStatus, getServerInstallProgress } from '../../api/servers'
 import {
   createProgressPoller,
-  LOST_CONTACT_MESSAGE,
+  lostContactMessage,
   POLL_INTERVAL_MS
 } from '../../utils/pollProgress'
 import {
@@ -793,7 +793,7 @@ export default {
     // Module-scope imports are not visible to an Options API template, so the
     // shared copy is surfaced here rather than duplicated as a literal.
     lostContactMessage() {
-      return LOST_CONTACT_MESSAGE
+      return lostContactMessage()
     },
 
     showModpackPanel() {
@@ -1585,7 +1585,7 @@ export default {
           }
           if (result.status === 'giveup') {
             console.error('Install-progress poll gave up:', result.error)
-            finish({ phase: 'unknown', error: LOST_CONTACT_MESSAGE })
+            finish({ phase: 'unknown', error: lostContactMessage() })
             return
           }
           const progress = result.progress
