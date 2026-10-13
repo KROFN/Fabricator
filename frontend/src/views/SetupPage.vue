@@ -23,7 +23,7 @@ async function onSubmit() {
   if (submitting.value) return
   error.value = ''
   if (password.value.length < MIN_LENGTH) {
-    error.value = t('auth.setup.tooShort', { min: MIN_LENGTH })
+    error.value = t('auth.tooShort', { min: MIN_LENGTH })
     return
   }
   if (password.value !== confirm.value) {

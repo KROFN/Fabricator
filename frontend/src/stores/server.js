@@ -36,6 +36,7 @@ import {
 } from '../api/servers'
 import { useToast } from '../composables/useToast'
 import { usePreferencesStore } from './preferences'
+import { t } from '../i18n'
 import {
   enrichInstalledModsWithModrinth,
   invalidateModrinthMetaCache
@@ -799,7 +800,7 @@ export const useServerStore = defineStore('server', () => {
           conflicts.push(file)
         } else {
           row.status = 'failed'
-          if (error?.message !== 'Upload cancelled') {
+          if (error?.message !== t('errors.uploadCancelled')) {
             toast.error(`${file.name}: ${row.error}`, 'Files')
           }
         }

@@ -1190,7 +1190,7 @@ export default {
         // Cancelling is something the user just did (closed the dialog); only
         // a real failure is news. The message is the one api/modrinth.js
         // raises on xhr.onabort.
-        if (error?.message === 'Upload cancelled') {
+        if (error?.message === this.$t('errors.uploadCancelled')) {
           return
         }
         this.packUploadError = error?.message || 'Could not read that .mrpack file.'

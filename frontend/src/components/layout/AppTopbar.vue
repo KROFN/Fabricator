@@ -93,7 +93,7 @@ const isPending = computed(() => props.serverStatus.status === 'pending')
   <header class="app-topbar">
     <div class="app-topbar__lead">
       <MobileMenuButton />
-      <nav v-if="settingsCrumb" class="app-topbar__title" :aria-label="$t('topbar.breadcrumb')">
+      <nav v-if="settingsCrumb" class="app-topbar__title" :aria-label="$t('common.breadcrumb')">
         <router-link :to="settingsCrumb.parent" class="app-topbar__crumb-link">{{ pageTitle }}</router-link>
         <span class="app-topbar__crumb-sep" aria-hidden="true">/</span>
         <span aria-current="page">{{ settingsCrumb.label }}</span>

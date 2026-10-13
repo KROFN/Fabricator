@@ -175,6 +175,7 @@ import AppButton from '../ui/AppButton.vue'
 import { useModpackImport } from '../../composables/useModpackImport'
 import { uploadModpackArchive, discardModpackUpload } from '../../api/modrinth'
 import { formatNumber, truncate } from '../../utils/format'
+import { t } from '../../i18n'
 
 const props = defineProps({
   show: { type: Boolean, required: true },
@@ -282,7 +283,7 @@ async function handleFileChange(event) {
     if (fileInput.value) fileInput.value.value = ''
     // Cancelling is something the user just did (closed the modal, picked a
     // different file); only a real failure is worth reporting.
-    if (error?.message !== 'Upload cancelled') {
+    if (error?.message !== t('errors.uploadCancelled')) {
       uploadError.value = error?.message || 'Could not read that .mrpack file.'
     }
   } finally {
