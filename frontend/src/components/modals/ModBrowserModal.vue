@@ -154,11 +154,10 @@ import {
   searchMods,
   getGameVersions,
   getModVersions,
-  resolveProjectVersion,
-  getModDetails
+  getMissingDependencies
 } from '../../api/modrinth'
 import { useServerStore } from '../../stores/server'
-import { installedEntryMatchesBrowseHit, installedEntryMatchesProjectRef } from '../../utils/modrinthJarMatch'
+import { installedEntryMatchesBrowseHit } from '../../utils/modrinthJarMatch'
 import { formatNumber, truncate } from '../../utils/format'
 import { loaderProjectType, loaderModrinthFacets } from '../../utils/loaderKind'
 
@@ -456,55 +455,15 @@ export default {
       await this.prepareInstall(mod)
     },
 
-    /** Resolves the Modrinth version used for install and warns when required dependencies are missing. */
+    /** Warns before installing when required dependencies, at any depth, are missing. */
     async prepareInstall(mod, versionOverride = null) {
       const preferredVersion = versionOverride || this.mcVersion
-      const loader = (this.loader || 'fabric').toLowerCase()
       try {
-        const resolved = await resolveProjectVersion(mod.project_id, {
+        const { dependencies } = await getMissingDependencies(useServerStore().currentServerId, mod.project_id, {
           mc_version: preferredVersion,
-          loader,
-          // Plugin servers resolve against the full facet chain so a
-          // spigot/bukkit-only plugin's dependencies are still detected.
-          loaders: this.isPlugin ? this.loaderFacets : undefined
+          loader: (this.loader || 'fabric').toLowerCase()
         })
-        const version = resolved?.version
-        if (!version || !Array.isArray(version.dependencies)) {
-          this.performInstall(mod, versionOverride)
-          return
-        }
-
-        const required = version.dependencies.filter(
-          (d) => d && d.dependency_type === 'required' && d.project_id
-        )
-        const store = useServerStore()
-        const missingMap = new Map()
-        for (const dep of required) {
-          const pid = dep.project_id
-          let details
-          try {
-            details = await getModDetails(pid)
-          } catch {
-            details = { id: pid, slug: pid, title: pid }
-          }
-          const ref = {
-            id: details.id || pid,
-            slug: details.slug
-          }
-          const installed = store.installedMods.some((file) =>
-            installedEntryMatchesProjectRef(file, ref)
-          )
-          if (!installed) {
-            const key = details.id || pid
-            if (!missingMap.has(key)) {
-              missingMap.set(key, {
-                modId: details.id || pid,
-                modTitle: details.title || details.slug || String(pid)
-              })
-            }
-          }
-        }
-        const missing = [...missingMap.values()]
+        const missing = (dependencies || []).map((dep) => ({ modId: dep.projectId, modTitle: dep.title }))
         if (missing.length > 0) {
           this.pendingDependencyContext = { mod, mcVersion: preferredVersion, missing }
           this.showDependencyModal = true

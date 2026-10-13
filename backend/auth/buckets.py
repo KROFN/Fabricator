@@ -53,6 +53,9 @@ _READ = [
     ("GET", "/api/modrinth/servers/<server_id>/resolve-installed"),
     # Same folder hashing, asking for newer releases instead (#80). Read-only.
     ("GET", "/api/modrinth/servers/<server_id>/updates"),
+    # Same folder hashing, against one project's dependency chain. Read-only;
+    # project_id only reaches the fixed upstream host, as in resolve-version.
+    ("GET", "/api/modrinth/servers/<server_id>/project/<project_id>/missing-dependencies"),
     ("GET", "/api/servers/<server_id>/snapshots"),
     ("GET", "/api/servers/<server_id>/backup-summary"),
     ("GET", "/api/servers/<server_id>/backup-configs"),

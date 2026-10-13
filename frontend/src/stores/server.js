@@ -1021,7 +1021,6 @@ export const useServerStore = defineStore('server', () => {
           loader: modData.loader,
           server_id: currentServerId.value
         })
-        await loadMods()
       }
       await installMod(modData.modId, {
         mc_version: modData.mcVersion,
