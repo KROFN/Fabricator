@@ -1514,7 +1514,7 @@ export default {
       if (!progress?.modpack_stage || !this.$te(key)) return ''
       const label = this.$t(key)
       if (progress.modpack_total > 0) {
-        return this.$t('createServer.stageProgress', {
+        return this.$t('install.stageProgress', {
           label,
           current: progress.modpack_current,
           total: progress.modpack_total

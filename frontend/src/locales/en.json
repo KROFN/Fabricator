@@ -41,7 +41,8 @@
     "search": "Search",
     "searching": "Searching",
     "noDescription": "No description provided.",
-    "uploadingPct": "Uploading {pct}%"
+    "uploadingPct": "Uploading {pct}%",
+    "installationFailed": "Installation Failed"
   },
   "errors": {
     "network": "Network error occurred",
@@ -106,7 +107,10 @@
     "restart": "Restart",
     "restarting": "Restarting",
     "stop": "Stop",
-    "stopping": "Stopping"
+    "stopping": "Stopping",
+    "start": "Start",
+    "starting": "Starting…",
+    "installing": "Installing…"
   },
   "switcher": {
     "reorderLabel": "Reorder {name}. Drag, or use arrow keys. The top server opens by default.",
@@ -183,6 +187,23 @@
       "title": "Delete Server",
       "message": "Delete this server permanently?",
       "description": "All server files and backups will be deleted. This cannot be undone."
+    },
+    "defaultName": "Minecraft Server",
+    "defaultMotd": "A Minecraft Server",
+    "title": "Servers",
+    "errorTitle": "Server Error",
+    "updatedTitle": "Server Updated",
+    "orderSaveFailed": "Failed to save server order",
+    "detailsLoadFailed": "Could not load server details",
+    "deleted": "Server deleted",
+    "deleteFailed": "Failed to delete server",
+    "startRequested": "Server start requested",
+    "stopRequested": "Server stop requested",
+    "restartRequested": "Server restart requested",
+    "actionFailed": {
+      "start": "Failed to start server",
+      "stop": "Failed to stop server",
+      "restart": "Failed to restart server"
     }
   },
   "createServer": {
@@ -288,7 +309,6 @@
       "verifying_mod_sides": "Checking mods for server compatibility…",
       "done": "Finishing up…"
     },
-    "stageProgress": "{label} ({current}/{total})",
     "continuesInBackground": "Installation continues in the background. The server appears in your list when it's ready.",
     "installRunningTitle": "Install Running",
     "nameRequired": "Please enter a server name.",
@@ -340,14 +360,58 @@
     "notAModpack": "This project exists but is not a modpack.",
     "noExactMatch": "No exact modpack found for \"{ref}\". Showing search results instead.",
     "resolveFailed": "Could not resolve modpack from link.",
-    "unknownTitle": "Unknown Modpack"
+    "unknownTitle": "Unknown Modpack",
+    "missingFilesIntro": "The following files could not be downloaded:",
+    "missingFilesMore": "...and {n} more.",
+    "missingFilesQuestion": "Install anyway without these files?",
+    "installedToast": "{title} installed successfully.",
+    "notes": {
+      "replaced": "Replaced folders: {n}.",
+      "missing": "Missing files skipped: {n}.",
+      "skipped": "Skipped {n} client-only mod. | Skipped {n} client-only mods.",
+      "uncertain": "Installed {n} mod with unknown server compatibility. | Installed {n} mods with unknown server compatibility.",
+      "backup": "Backup: {file}."
+    },
+    "unknownSideKept": "Unknown-side mods were kept because missing metadata is not evidence they are client-only. Check server logs if startup fails.",
+    "compatibilityWarningTitle": "Compatibility Warning",
+    "javaMismatchTitle": "Java Version Mismatch",
+    "needsSideDecision": "Some mods need a server/client decision before install can continue.",
+    "uncertainSideTitle": "Uncertain Mod Side",
+    "missingFilesToast": "{n} file could not be downloaded. Choose if you want to continue without it. | {n} files could not be downloaded. Choose if you want to continue without them.",
+    "installFailed": "Modpack installation failed",
+    "installCanceled": "Modpack install canceled. Unknown mod sides were not confirmed.",
+    "installCanceledTitle": "Install Canceled"
   },
   "install": {
     "lostContact": "Lost contact with the panel while installing. The install is most likely still running in the background — reopen the server to check on it.",
     "title": "Server Installation",
     "success": "Server installed successfully.",
     "failed": "Installation failed",
-    "failedTitle": "Server Installation Failed"
+    "failedTitle": "Server Installation Failed",
+    "stageProgress": "{label} ({current}/{total})",
+    "installingServer": "Installing server…",
+    "modpackStages": {
+      "starting": "Starting install...",
+      "resolving": "Resolving modpack version...",
+      "cleaning": "Cleaning old modpack files...",
+      "downloadingPack": "Downloading modpack archive...",
+      "checkingAvailability": "Checking file availability...",
+      "installingFiles": "Downloading mods...",
+      "extractingOverrides": "Extracting override files...",
+      "verifyingModSides": "Checking mods for server compatibility...",
+      "done": "Finishing up..."
+    },
+    "phases": {
+      "starting": "Starting install...",
+      "resolvingModpack": "Resolving modpack...",
+      "resolvingVersions": "Resolving versions...",
+      "downloadingInstaller": "Downloading installer...",
+      "downloadingServerJar": "Downloading server files...",
+      "verifying": "Verifying download...",
+      "runningInstaller": "Running installer...",
+      "finishing": "Finishing server files..."
+    },
+    "serverFailed": "Failed to install server"
   },
   "editor": {
     "syntaxError": "Syntax error"
@@ -382,7 +446,9 @@
       "last": "Restore last state",
       "lastHint": "Start only if it was running when Fabricator last stopped — survives crashes and host reboots.",
       "never": "Never",
-      "neverHint": "Do not start automatically. Start it manually when you need it."
+      "neverHint": "Do not start automatically. Start it manually when you need it.",
+      "updated": "Auto-start updated",
+      "updateFailed": "Failed to update auto-start"
     },
     "display": {
       "ramMb": "Show RAM in MB on the Overview",
@@ -434,7 +500,11 @@
     "noLevelEntries": "No {level} entries.",
     "commandPlaceholder": "Type a command and press Enter…",
     "serverNotRunning": "Server not running",
-    "send": "Send"
+    "send": "Send",
+    "commandSent": "Command sent to server",
+    "commandFailed": "Failed to send console command",
+    "errorTitle": "Console Error",
+    "logsLoadFailed": "Failed to load console logs"
   },
   "files": {
     "tree": {
@@ -466,7 +536,8 @@
       "searching": "Searching…",
       "noMatches": "No files match “{query}”.",
       "summary": "{n} match for “{query}” | {n} matches for “{query}”",
-      "summaryTruncated": "{n} match for “{query}” — showing the first results only, refine your search. | {n} matches for “{query}” — showing the first results only, refine your search."
+      "summaryTruncated": "{n} match for “{query}” — showing the first results only, refine your search. | {n} matches for “{query}” — showing the first results only, refine your search.",
+      "failed": "Search failed"
     },
     "uploadSkipped": "Upload skipped — the file was left as it is | {n} uploads skipped",
     "foldersUnsupported": "Folders can't be uploaded yet — drop the files inside instead",
@@ -505,7 +576,20 @@
     "folder": {
       "message": "Create a folder in {path}.",
       "name": "Folder name"
-    }
+    },
+    "loadFailed": "Unable to load files",
+    "uploadFailed": "Upload failed",
+    "uploadedOne": "Uploaded {name}",
+    "uploadedMany": "Uploaded {n} files",
+    "deleteFailed": "Delete failed",
+    "deletedOne": "Deleted {name}",
+    "deletedMany": "Deleted {n} items",
+    "created": "Created {name}",
+    "createFolderFailed": "Could not create folder",
+    "notEditable": "Only supported text files can be edited",
+    "openFailed": "Unable to open file",
+    "saved": "File saved",
+    "saveFailed": "Failed to save file"
   },
   "mods": {
     "installedMods": "Installed Mods",
@@ -541,6 +625,57 @@
     "meta": {
       "disabled": "disabled",
       "update": "update: {version}"
+    },
+    "localVersion": "local",
+    "loadFailed": "Failed to load installed mods",
+    "update": {
+      "title": "Update Mods",
+      "message": "Update {n} mod to the newest release? | Update {n} mods to the newest release?",
+      "depsDescription": "The updates also need {n} mod you don't have, which will be installed first. | The updates also need {n} mods you don't have, which will be installed first.",
+      "description": "Each old jar is removed only once its replacement has downloaded.",
+      "newDependency": "New dependency: {title}",
+      "done": "{n} mod updated or installed | {n} mods updated or installed",
+      "doneTitle": "Mods Updated",
+      "failed": "Could not install: {list}",
+      "failedTitle": "Update Failed"
+    },
+    "installedToast": "{title} installed successfully!",
+    "installedWithDeps": "{title} installed successfully and {n} dependency! | {title} installed successfully and {n} dependencies!",
+    "installedTitle": "Mod Installed",
+    "installFailed": "Mod installation failed",
+    "noVersionList": "This jar could not be matched to a Modrinth project, so its versions are unknown.",
+    "noVersionListTitle": "No version list",
+    "versionChanged": "{title} is now on version {version}",
+    "versionChangedTitle": "Version changed",
+    "versionChangeFailed": "Could not change the mod version",
+    "installFailedTitle": "Install Failed",
+    "remove": {
+      "title": "Remove Mod",
+      "message": "Remove {name}?",
+      "description": "This will delete the mod file from the server. This action cannot be undone.",
+      "done": "{name} removed",
+      "doneTitle": "Mod Removed",
+      "failed": "Failed to remove mod"
+    },
+    "bulkRemove": {
+      "title": "Remove Mods",
+      "message": "Remove {n} selected mod? | Remove {n} selected mods?",
+      "description": "This will permanently delete the selected mod files from the server. This action cannot be undone.",
+      "confirm": "Remove {n} mod | Remove {n} mods",
+      "done": "{n} mod removed | {n} mods removed",
+      "doneTitle": "Mods Removed",
+      "failed": "Failed to remove selected mods"
+    },
+    "toggle": {
+      "enabled": "{n} mod enabled. | {n} mods enabled.",
+      "disabled": "{n} mod disabled. | {n} mods disabled.",
+      "restartToApply": "Restart the server to apply.",
+      "enabledTitle": "Mods Enabled",
+      "disabledTitle": "Mods Disabled",
+      "notEnabled": "{n} not enabled",
+      "notDisabled": "{n} not disabled",
+      "enableFailed": "Failed to enable selected mods",
+      "disableFailed": "Failed to disable selected mods"
     }
   },
   "browse": {
@@ -1212,7 +1347,10 @@
       "updateFailed": "Failed to update server icon",
       "change": "Change image",
       "upload": "Upload image"
-    }
+    },
+    "saved": "Settings saved successfully",
+    "savedTitle": "Settings Updated",
+    "saveFailed": "Failed to save settings"
   },
   "modpackBrowser": {
     "title": "Browse Modpacks",
