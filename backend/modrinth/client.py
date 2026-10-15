@@ -11,6 +11,7 @@ import re
 import shutil
 import sys
 import tempfile
+import uuid
 import zipfile
 
 if sys.version_info >= (3, 11):
@@ -569,14 +570,9 @@ class ModrinthClient:
                 timeout=60,
                 error_context="Failed to download mod file",
             ) as response:
-                with tempfile.NamedTemporaryFile(
-                    mode="wb",
-                    prefix=".fabricator-download-",
-                    suffix=".part",
-                    dir=target_folder,
-                    delete=False,
-                ) as file_handle:
-                    staged_path = Path(file_handle.name)
+                candidate = target_folder / f".fabricator-download-{uuid.uuid4().hex}.part"
+                with open(candidate, "xb") as file_handle:
+                    staged_path = candidate
                     for chunk in response.iter_content(chunk_size=8192):
                         if not chunk:
                             continue
