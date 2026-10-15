@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import hashlib
+import os
+import stat
 from pathlib import Path
 
 import pytest
@@ -244,3 +246,18 @@ def test_install_route_failed_download_preserves_same_name_jar(
     assert "mismatch" in response.get_json()["error"]
     assert existing.read_bytes() == b"working version"
     _assert_no_staging_files(folder)
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX file mode permissions only")
+def test_downloaded_jar_uses_default_file_permissions(monkeypatch, tmp_path):
+    """The staged file should follow umask, not NamedTemporaryFile's fixed 0600."""
+    client = _make_client(monkeypatch, b"valid jar")
+    previous_umask = os.umask(0o022)
+    try:
+        result = client.download_mod(
+            "https://cdn.modrinth.com/sodium.jar",
+            tmp_path,
+        )
+        assert stat.S_IMODE(result.stat().st_mode) == 0o644
+    finally:
+        os.umask(previous_umask)
